@@ -1,2 +1,2 @@
 FROM scratch
-COPY plugin /plugin
+COPY plugin /compliance-framework/plugin
