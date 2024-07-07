@@ -15,8 +15,8 @@ RUN go mod download
 COPY . .
 
 # Build the application
-RUN CGO_ENABLED=0 GOOS=linux go build -o azurecli main.go
+RUN CGO_ENABLED=0 GOOS=linux go build -o plugin main.go
 
 # Stage 2: Create a minimal image with the binary
 FROM scratch
-COPY --from=builder /app/azurecli /compliance-framework/azurecli
+COPY --from=builder /app/plugin /compliance-framework/plugin
