@@ -7,6 +7,7 @@ require (
 	github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/compute/armcompute v1.0.0
 	github.com/compliance-framework/assessment-runtime v0.0.0-20240706082156-4baf7a4a9db2
 	github.com/google/uuid v1.6.0
+	gopkg.in/yaml.v2 v2.4.0
 )
 
 require (

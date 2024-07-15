@@ -6,25 +6,45 @@ import (
 	"context"
 	"os"
 	"strings"
+	"log"
 
 	. "github.com/compliance-framework/assessment-runtime/provider"
 	"github.com/google/uuid"
     "github.com/Azure/azure-sdk-for-go/sdk/azidentity"
     "github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/compute/armcompute"
+	"gopkg.in/yaml.v2"
 )
 
 type AzureCliProvider struct {
 	message string
 }
 
+type AzureCliConfig struct {
+	SubscriptionId string `json:"subscriptionid" yaml:"subscriptionid"`
+	ClientId       string `json:"clientid" yaml:"clientid"`
+	TenantId       string `json:"tenantid" yaml:"tenantid"`
+}
+
 func (p *AzureCliProvider) Evaluate(input *EvaluateInput) (*EvaluateResult, error) {
 	var vmIds []string
+	var azure_cli_config AzureCliConfig
 
-    // Get environment variables and configuration data (not sure why subId is not env variable)
-    clientId := os.Getenv("AZURE_CLIENT_ID")
+    yamlString, ok := input.Configuration["yaml"]
+    if !ok {
+        return nil, fmt.Errorf("yaml parameter is missing")
+    }
+    err := yaml.Unmarshal([]byte(yamlString), &azure_cli_config)
+    if err != nil {
+        return nil, fmt.Errorf("Error unmarshalling YAML: %v\n", err)
+    }
+	log.Printf("yamlString: %s", yamlString)
+
+	subscriptionId := azure_cli_config.SubscriptionId
+    clientId       := azure_cli_config.ClientId
+    tenantId       := azure_cli_config.TenantId
+
+    // Get environment variable for the secret
     clientSecret := os.Getenv("AZURE_CLIENT_SECRET")
-    tenantId := os.Getenv("AZURE_TENANT_ID")
-	subscriptionId, ok := input.Configuration["subscriptionId"]
 
     if clientId == "" || clientSecret == "" || tenantId == "" {
 		return nil, fmt.Errorf("One or more environment variables are not set")
@@ -84,11 +104,24 @@ func (p *AzureCliProvider) Execute(input *ExecuteInput) (*ExecuteResult, error) 
 	var obs *Observation
 	var fndngs *Finding
 
-    // Get environment variables and config variable.
-    clientId := os.Getenv("AZURE_CLIENT_ID")
+	var azure_cli_config AzureCliConfig
+
+    yamlString, ok := input.Configuration["yaml"]
+    if !ok {
+        return nil, fmt.Errorf("yaml parameter is missing")
+    }
+    err := yaml.Unmarshal([]byte(yamlString), &azure_cli_config)
+    if err != nil {
+        return nil, fmt.Errorf("Error unmarshalling YAML: %v\n", err)
+    }
+	log.Printf("yamlString: %s", yamlString)
+
+	subscriptionId := azure_cli_config.SubscriptionId
+    clientId       := azure_cli_config.ClientId
+    tenantId       := azure_cli_config.TenantId
+
+    // Get environment variable for secret
     clientSecret := os.Getenv("AZURE_CLIENT_SECRET")
-    tenantId := os.Getenv("AZURE_TENANT_ID")
-	subscriptionId, ok := input.Configuration["subscriptionId"]
 
     if clientId == "" || clientSecret == "" || tenantId == "" {
 		return nil, fmt.Errorf("One or more environment variables are not set")
@@ -112,7 +145,6 @@ func (p *AzureCliProvider) Execute(input *ExecuteInput) (*ExecuteResult, error) 
     if err != nil {
 		return nil, fmt.Errorf("failed to create virtual machines client: %v", err)
     }
-
 
 	// Retrieve the VM ID from the subject properties
 	vmId, ok := input.Subject.Props["id"]
